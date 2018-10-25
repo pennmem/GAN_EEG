@@ -48,7 +48,6 @@ def get_sessions(subject, experiement):
 
 
 
-
 # def train_input_fn(features, labels, batch_size):
 #     """An input function for training"""
 #     # Convert the inputs to a Dataset.
