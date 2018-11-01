@@ -5,11 +5,11 @@ from load_eeg import load_data
 import tensorflow as tf
 tfgan = tf.contrib.gan
 from tensorflow.contrib.training import HParams
-from gan_mnist_utils_keras import*
+from dc_gan import*
 import matplotlib.pyplot as plt
 
 from tensorflow.keras.optimizers import Adam
-
+import os
 
 
 mnist = tf.keras.datasets.mnist
@@ -20,9 +20,11 @@ tf.reset_default_graph()
 n_rows = 28
 n_cols = 28
 
-train_x = train_x.reshape(-1,28*28)
 train_x = train_x.astype(np.float32)
 train_x = ((train_x - 128)/ 128)
+
+train_x = train_x[:,:,:,np.newaxis]
+
 #plot some images
 # fig, axes = plt.subplots(nrows=2, ncols =2)
 # for i in np.arange(2):
@@ -36,20 +38,19 @@ train_x_prior = np.random.uniform(-1.0,1.0,size = (60000,input_dim)).astype(np.f
 n_features = train_x.shape[1]
 n_sample = train_x.shape[0]
 
-discriminator = build_discriminator(n_features, [512,256])
-discriminator_optimizer = Adam(0.001,0.5)
+discriminator = discriminator_model()
+discriminator_optimizer = Adam(0.00005,0.5)
 discriminator.compile(loss = 'binary_crossentropy', optimizer=discriminator_optimizer, metrics = ['accuracy'])
 
 
 discriminator.trainable = False
-generator = build_generator(100, [256,512], n_features)
-generator_optimizer = Adam(0.0001,0.5)
+generator = generator_model()
+generator_optimizer = Adam(0.0002,0.5)
 input_noise = Input(shape = (input_dim,))
 encoder_repr = generator(input_noise)
 validity = discriminator(encoder_repr)
 gan_model = Model(input_noise, outputs = [validity])
 gan_model.compile(loss = 'binary_crossentropy', optimizer=generator_optimizer, metrics = ['accuracy'])
-
 
 
 n_epochs = 1000
@@ -82,8 +83,8 @@ for epoch in range(n_epochs):
     g_loss = gan_model.train_on_batch(noise, valid)
 
 
-    if epoch%200 == 0:
-        print ("%d [D loss: %f, acc: %.2f%%] [G loss: %f, acc: %f] [" % (epoch, d_loss[0], 100*d_loss[1], g_loss[0], g_loss[1]))
+    if epoch%20 == 0:
+        print ("%d [D loss: %f, acc: %.2f%%] [G loss: %f, acc: %f]" % (epoch, d_loss[0], 100*d_loss[1], g_loss[0], 100*g_loss[1]))
         d_loss_vec.append(d_loss)
         g_loss_vec.append(g_loss)
         # generate fake images
@@ -96,5 +97,8 @@ for epoch in range(n_epochs):
             for j in np.arange(2):
                 axes[i,j].imshow(imgs_fake[i+j,:,:])
 
+        fig.savefig(os.getcwd() + "/results/sample_cycle_" + str(epoch) + '.pdf')
 
-        fig.savefig("sample_cycle_" + str(epoch) + '.pdf')
+
+fig, ax = plt.subplots(1)
+ax.plot(g_loss_vec)
