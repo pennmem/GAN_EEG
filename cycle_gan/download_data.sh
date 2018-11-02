@@ -7,9 +7,9 @@ fi
 
 echo "Specified [$FILE]"
 URL=https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/$FILE.zip
-ZIP_FILE=/Applications/PyCharm\ CE.app/Contents/bin/GAN_EEG/cycle_gan/datasets/$FILE.zip
-TARGET_DIR=/Applications/PyCharm\ CE.app/Contents/bin/GAN_EEG/cycle_gan/datasets/
+ZIP_FILE=/Users/tungphan/PycharmProjects/GAN_EEG/cycle_gan/datasets/$FILE.zip
+TARGET_DIR=/Users/tungphan/PycharmProjects/GAN_EEG/cycle_gan/datasets/
 wget -N $URL -O $ZIP_FILE
 mkdir $TARGET_DIR
-unzip $ZIP_FILE -d /Applications/PyCharm\ CE.app/Contents/bin/GAN_EEG/cycle_gan/datasets
+unzip $ZIP_FILE -d /Users/tungphan/PycharmProjects/GAN_EEG/cycle_gan/datasets
 rm $ZIP_FILE
