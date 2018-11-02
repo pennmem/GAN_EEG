@@ -1,4 +1,5 @@
 # utility for gans
+
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Reshape, Dropout, BatchNormalization, \
     LeakyReLU, Activation, UpSampling2D, Conv2D, MaxPooling2D,  Flatten
@@ -26,8 +27,6 @@ def generator_model():
     model.add(Conv2D(1, (5, 5), padding='same'))
     model.add(LeakyReLU(0.2))
     return model
-
-
 
 
 def discriminator_model():

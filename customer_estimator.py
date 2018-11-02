@@ -114,9 +114,6 @@ if __name__ == '__main__':
             'C':7.2e-4, 'weight_column': weight_column}
         , model_dir='custom_' + str(session), config=my_checkpointing_config)
 
-
-
-
         # classifier = tf.estimator.DNNClassifier(feature_columns=my_feature_columns, hidden_units=[], n_classes = 2, weight_column = weight_column,
         #                                         activation_fn=tf.nn.softmax,
         #                                         model_dir='savedir_' + str(session), config = my_checkpointing_config)
@@ -128,7 +125,7 @@ if __name__ == '__main__':
         train_input_fn = tf.estimator.inputs.pandas_input_fn(x = train_x, y = train_y, shuffle=True, batch_size=12, num_epochs=1000)
         eval_input_fn = tf.estimator.inputs.pandas_input_fn(x = test_x, y = test_y, shuffle=False, num_epochs=1, batch_size=32)
 
-        classifier.train(input_fn=train_input_fn,  max_steps=10000)
+        classifier.train(input_fn=train_input_fn,  max_steps=1000)
 
         # Evaluate the model.
         eval_result = classifier.evaluate(

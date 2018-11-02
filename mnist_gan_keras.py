@@ -87,17 +87,8 @@ for epoch in range(n_epochs):
         print ("%d [D loss: %f, acc: %.2f%%] [G loss: %f, acc: %f]" % (epoch, d_loss[0], 100*d_loss[1], g_loss[0], 100*g_loss[1]))
         d_loss_vec.append(d_loss)
         g_loss_vec.append(g_loss)
-        # generate fake images
-        noise = np.random.normal(size = (10, input_dim))
-        imgs_fake = generator.predict(noise)
-        imgs_fake = imgs_fake.reshape(-1,28,28)
 
-        fig, axes = plt.subplots(nrows=2, ncols =2)
-        for i in np.arange(2):
-            for j in np.arange(2):
-                axes[i,j].imshow(imgs_fake[i+j,:,:])
-
-        fig.savefig(os.getcwd() + "/results/sample_cycle_" + str(epoch) + '.pdf')
+        generate_image(generator, input_dim, epoch)
 
 
 fig, ax = plt.subplots(1)
