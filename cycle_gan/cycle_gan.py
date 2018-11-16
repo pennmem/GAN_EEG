@@ -14,8 +14,6 @@ import numpy as np
 import os
 
 from cycle_gan.load_data import *
-
-
 from cycle_gan.cycle_gan_utils import *
 
 imgs_rows = 256
@@ -55,8 +53,8 @@ reconstrc_B = generator_A2B(fake_A)
 
 
 # identity maps
-img_A_id = generator_B2A(img_A)
-img_B_id = generator_A2B(img_B)
+# img_A_id = generator_B2A(img_A)
+# img_B_id = generator_A2B(img_B)
 
 d_A.trainable = False
 d_B.trainable = False
@@ -64,32 +62,36 @@ d_B.trainable = False
 valid_A = d_A(fake_A)
 valid_B = d_B(fake_B)
 
-combined = Model(inputs = [img_A, img_B], outputs = [valid_A, valid_B, reconstrc_A, reconstrc_B, img_A_id, img_B_id])
-combined.compile(loss = ['mse', 'mse', 'mae', 'mae', 'mae', 'mae'], loss_weights=[1,1,lambda_cycle, lambda_cycle, lambda_id, lambda_id],  optimizer = optimizer)
+# combined = Model(inputs = [img_A, img_B], outputs = [valid_A, valid_B, reconstrc_A, reconstrc_B, img_A_id, img_B_id])
+combined = Model(inputs = [img_A, img_B], outputs = [valid_A, valid_B, reconstrc_A, reconstrc_B])
+combined.compile(loss = ['mse', 'mse', 'mae', 'mae'], loss_weights=[1,1,lambda_cycle, lambda_cycle],  optimizer = optimizer)
+# combined.compile(loss = ['mse', 'mse', 'mae', 'mae', 'mae', 'mae'], loss_weights=[1,1,lambda_cycle, lambda_cycle, lambda_id, lambda_id],  optimizer = optimizer)
 
 
 n_epochs = 100
-batch_size = 32
+batch_size = 16
 
 valid = np.ones((batch_size,) + disc_patch)
 fake = np.zeros((batch_size,) + disc_patch)
-
-a_loader,b_loader = get_iphone_dataset(batch_size=batch_size)
-a_loader = iter(a_loader)
-b_loader = iter(b_loader)
-
 
 
 sample_interval = 10
 start_time = datetime.datetime.now()
 
+
 for batch_i,epoch in enumerate(np.arange(n_epochs)):
+
+    a_loader,b_loader = get_iphone_dataset(batch_size=batch_size)
+    a_loader = iter(a_loader)
+    b_loader = iter(b_loader)
+
+
     # load data
     imgs_A = a_loader.next().numpy()
     imgs_B = b_loader.next().numpy()
 
-    imgs_A = (imgs_A-128)/128
-    imgs_B = (imgs_B-128)/128
+    imgs_A = imgs_A/127.5- 1.0
+    imgs_B = imgs_B/127.5 -1.0
 
     fake_B = generator_A2B.predict(imgs_A)
     fake_A = generator_B2A.predict(imgs_B)
@@ -105,7 +107,7 @@ for batch_i,epoch in enumerate(np.arange(n_epochs)):
     # Total disciminator loss
     d_loss = 0.5 * np.add(dA_loss, dB_loss)
 
-    g_loss = combined.train_on_batch([imgs_A, imgs_B],[valid, valid,imgs_A, imgs_B, imgs_A, imgs_B])
+    g_loss = combined.train_on_batch([imgs_A, imgs_B], [valid, valid, imgs_A, imgs_B])
 
     elapsed_time = datetime.datetime.now() - start_time
 
@@ -122,3 +124,46 @@ for batch_i,epoch in enumerate(np.arange(n_epochs)):
 
     if batch_i % sample_interval == 0:
         sample_images(epoch, batch_i, generator_A2B, generator_B2A)
+
+
+
+    r, c = 2, 3
+
+    a_loader,b_loader = get_iphone_dataset(batch_size=1)
+    a_loader = iter(a_loader)
+    b_loader = iter(b_loader)
+
+    imgs_A = a_loader.next().numpy()
+    imgs_B = b_loader.next().numpy()
+
+    imgs_A = imgs_A/127.5- 1.0
+    imgs_B = imgs_B/127.5 -1.0
+
+
+    # Demo (for GIF)
+    #imgs_A = self.data_loader.load_img('datasets/apple2orange/testA/n07740461_1541.jpg')
+    #imgs_B = self.data_loader.load_img('datasets/apple2orange/testB/n07749192_4241.jpg')
+
+    # Translate images to the other domain
+    fake_B = generator_A2B.predict(imgs_A)
+    fake_A = generator_B2A.predict(imgs_B)
+    # Translate back to original domain
+    reconstr_A = generator_B2A.predict(fake_B)
+    reconstr_B = generator_A2B.predict(fake_A)
+
+    gen_imgs = np.concatenate([imgs_A, fake_B, reconstr_A, imgs_B, fake_A, reconstr_B])
+
+    # Rescale images 0 - 1
+    gen_imgs = 0.5 * gen_imgs + 0.5
+
+    titles = ['Original', 'Translated', 'Reconstructed']
+    fig, axs = plt.subplots(r, c)
+    cnt = 0
+    for i in range(r):
+        for j in range(c):
+            axs[i,j].imshow(gen_imgs[cnt])
+            axs[i, j].set_title(titles[j])
+            axs[i,j].axis('off')
+            cnt += 1
+    fig.savefig("images/%s/%d_%d.png" % ('zebra2horse', epoch, batch_i))
+    plt.close()

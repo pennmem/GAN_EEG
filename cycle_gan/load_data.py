@@ -160,8 +160,9 @@ def get_iphone_dataset(batch_size, im_size=300, random_crop_size=256):
 
 
 
-
 def sample_images(epoch, batch_i, generator_A2B, generator_B2A):
+
+
     os.makedirs('images/%s' %'zebra2horse', exist_ok=True)
     r, c = 2, 3
 
@@ -172,8 +173,8 @@ def sample_images(epoch, batch_i, generator_A2B, generator_B2A):
     imgs_A = a_loader.next().numpy()
     imgs_B = b_loader.next().numpy()
 
-    imgs_A = (imgs_A-128)/128
-    imgs_B = (imgs_B-128)/128
+    imgs_A = (imgs_A-128.0)/128.0
+    imgs_B = (imgs_B-128.0)/128.0
 
 
     # Demo (for GIF)
@@ -203,3 +204,5 @@ def sample_images(epoch, batch_i, generator_A2B, generator_B2A):
             cnt += 1
     fig.savefig("images/%s/%d_%d.png" % ('zebra2horse', epoch, batch_i))
     plt.close()
+
+
