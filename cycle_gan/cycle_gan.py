@@ -12,9 +12,12 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 import os
+import keras
+from keras.engine.topology import Network
 
-from cycle_gan.load_data import *
-from cycle_gan.cycle_gan_utils import *
+
+from load_data import *
+from cycle_gan_utils import *
 
 imgs_rows = 256
 imgs_cols = 256
@@ -36,6 +39,7 @@ lambda_id = 0.1*lambda_cycle
 d_A = build_discriminator(img_shape, n_filters=4)
 d_B = build_discriminator(img_shape, n_filters=4)
 
+
 d_A.compile(loss = 'mse', optimizer = optimizer, metrics = ['accuracy'])
 d_B.compile(loss = 'mse', optimizer = optimizer, metrics = ['accuracy'])
 
@@ -53,22 +57,29 @@ reconstrc_B = generator_A2B(fake_A)
 
 
 # identity maps
-# img_A_id = generator_B2A(img_A)
-# img_B_id = generator_A2B(img_B)
-
-d_A.trainable = False
-d_B.trainable = False
-
-valid_A = d_A(fake_A)
-valid_B = d_B(fake_B)
-
-# combined = Model(inputs = [img_A, img_B], outputs = [valid_A, valid_B, reconstrc_A, reconstrc_B, img_A_id, img_B_id])
-combined = Model(inputs = [img_A, img_B], outputs = [valid_A, valid_B, reconstrc_A, reconstrc_B])
-combined.compile(loss = ['mse', 'mse', 'mae', 'mae'], loss_weights=[1,1,lambda_cycle, lambda_cycle],  optimizer = optimizer)
-# combined.compile(loss = ['mse', 'mse', 'mae', 'mae', 'mae', 'mae'], loss_weights=[1,1,lambda_cycle, lambda_cycle, lambda_id, lambda_id],  optimizer = optimizer)
+img_A_id = generator_B2A(img_A)
+img_B_id = generator_A2B(img_B)
 
 
-n_epochs = 100
+guess_A = d_A(img_A)
+guess_B = d_B(img_B)
+
+d_A_static = Network(inputs = img_A, outputs  = guess_A)
+d_B_static = Network(inputs = img_B, outputs = guess_B)
+
+d_A_static.trainable = False
+d_B_static.trainable = False
+
+valid_A = d_A_static(fake_A)
+valid_B = d_B_static(fake_B)
+
+combined = Model(inputs = [img_A, img_B], outputs = [valid_A, valid_B, reconstrc_A, reconstrc_B, img_A_id, img_B_id])
+# combined = Model(inputs = [img_A, img_B], outputs = [valid_A, valid_B, reconstrc_A, reconstrc_B])
+# combined.compile(loss = ['mse', 'mse', 'mae', 'mae'], loss_weights=[1,1,lambda_cycle, lambda_cycle],  optimizer = optimizer)
+combined.compile(loss = ['mse', 'mse', 'mae', 'mae', 'mae', 'mae'], loss_weights=[1,1,lambda_cycle, lambda_cycle, lambda_id, lambda_id],  optimizer = optimizer)
+
+
+n_epochs = 1000
 batch_size = 16
 
 valid = np.ones((batch_size,) + disc_patch)
@@ -90,8 +101,8 @@ for batch_i,epoch in enumerate(np.arange(n_epochs)):
     imgs_A = a_loader.next().numpy()
     imgs_B = b_loader.next().numpy()
 
-    imgs_A = imgs_A/127.5- 1.0
-    imgs_B = imgs_B/127.5 -1.0
+    imgs_A = imgs_A/128.0- 1.0
+    imgs_B = imgs_B/128.0 -1.0
 
     fake_B = generator_A2B.predict(imgs_A)
     fake_A = generator_B2A.predict(imgs_B)
@@ -107,7 +118,7 @@ for batch_i,epoch in enumerate(np.arange(n_epochs)):
     # Total disciminator loss
     d_loss = 0.5 * np.add(dA_loss, dB_loss)
 
-    g_loss = combined.train_on_batch([imgs_A, imgs_B], [valid, valid, imgs_A, imgs_B])
+    g_loss = combined.train_on_batch([imgs_A, imgs_B], [valid, valid, imgs_A, imgs_B, imgs_A, imgs_B])
 
     elapsed_time = datetime.datetime.now() - start_time
 
@@ -136,8 +147,8 @@ for batch_i,epoch in enumerate(np.arange(n_epochs)):
     imgs_A = a_loader.next().numpy()
     imgs_B = b_loader.next().numpy()
 
-    imgs_A = imgs_A/127.5- 1.0
-    imgs_B = imgs_B/127.5 -1.0
+    imgs_A = imgs_A/128.0- 1.0
+    imgs_B = imgs_B/128.0 -1.0
 
 
     # Demo (for GIF)
@@ -165,5 +176,8 @@ for batch_i,epoch in enumerate(np.arange(n_epochs)):
             axs[i, j].set_title(titles[j])
             axs[i,j].axis('off')
             cnt += 1
+
+
+
     fig.savefig("images/%s/%d_%d.png" % ('zebra2horse', epoch, batch_i))
     plt.close()

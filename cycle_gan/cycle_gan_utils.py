@@ -32,7 +32,7 @@ def build_generator(img_shape, channels, n_filters = 4):
         if dropout_rate:
             u = Dropout(dropout_rate)(u)
 
-        u = InstanceNormalization()(u)
+        u = BatchNormalization()(u)
         u = Concatenate()([u, skip_input])
 
         return u
@@ -65,7 +65,7 @@ def build_discriminator(img_shape, n_filters):
         d = Conv2D(filters, kernel_size=f_size, strides=2, padding='same')(layer_input)
         d = LeakyReLU(alpha=0.2)(d)
         if normalization:
-            d = InstanceNormalization()(d)
+            d = BatchNormalization()(d)
         return d
 
     img = Input(shape = img_shape)

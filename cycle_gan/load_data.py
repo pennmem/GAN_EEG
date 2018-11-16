@@ -32,7 +32,7 @@ def plot_raw_imgs(imglist, dirname, idx=0):
     plt.axis('off')
 
 
-plot_raw_imgs(train_B_imglist, train_folder_b, 10)
+# plot_raw_imgs(train_B_imglist, train_folder_b, 10)
 
 
 def is_image_file(filename):
