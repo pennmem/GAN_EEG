@@ -10,11 +10,12 @@ import torch
 import numpy as np
 
 data_dir = '/Users/tungphan/PycharmProjects/GAN_EEG/cycle_gan/datasets/'
+dataset = 'apple2orange'
 
-train_folder_a = data_dir + 'horse2zebra/trainA/'
-test_folder_a = data_dir + 'horse2zebra/testA/'
-train_folder_b = data_dir + 'horse2zebra/trainB/'
-test_folder_b = data_dir + 'horse2zebra/testB/'
+train_folder_a = data_dir + dataset + '/trainA/'
+test_folder_a = data_dir + dataset + '/testA/'
+train_folder_b = data_dir + dataset + '/trainB/'
+test_folder_b = data_dir + dataset + '/testB/'
 
 
 
@@ -136,7 +137,7 @@ class ImageFolder(data.Dataset):
 
 
 
-def get_iphone_dataset(batch_size, im_size=300, random_crop_size=256):
+def get_iphone_dataset(batch_size, im_size=300, random_crop_size=256, testing = False):
     random_crop_size = 256
     transform = transforms.Compose(
         [transforms.RandomHorizontalFlip(),
@@ -150,10 +151,20 @@ def get_iphone_dataset(batch_size, im_size=300, random_crop_size=256):
     test_a_ = ImageFolder(test_folder_a, transform=None)
     test_b_ = ImageFolder(test_folder_b, transform=None)
 
-    train_a_loader=torch.utils.data.DataLoader(train_a_, batch_size=batch_size,
-                                           shuffle=True, num_workers=1)
-    train_b_loader=torch.utils.data.DataLoader(train_b_, batch_size=batch_size,
-                                           shuffle=True, num_workers=1)
+
+
+    if testing:
+        train_a_loader=torch.utils.data.DataLoader(train_a_, batch_size=batch_size,
+                                               shuffle=True, num_workers=1)
+        train_b_loader=torch.utils.data.DataLoader(train_b_, batch_size=batch_size,
+                                               shuffle=True, num_workers=1)
+    else:
+        train_a_loader=torch.utils.data.DataLoader(test_a_, batch_size=batch_size,
+                                               shuffle=True, num_workers=1)
+        train_b_loader=torch.utils.data.DataLoader(test_b_, batch_size=batch_size,
+                                               shuffle=True, num_workers=1)
+
+
 
     return train_a_loader, train_b_loader
 
@@ -163,10 +174,10 @@ def get_iphone_dataset(batch_size, im_size=300, random_crop_size=256):
 def sample_images(epoch, batch_i, generator_A2B, generator_B2A):
 
 
-    os.makedirs('images/%s' %'zebra2horse', exist_ok=True)
+    #os.makedirs('/Volumes/RHINO/home2/tungphan/GAN_EEG/images/%s' % dataset, exist_ok=True)
     r, c = 2, 3
 
-    a_loader,b_loader = get_iphone_dataset(batch_size=1)
+    a_loader,b_loader = get_iphone_dataset(batch_size=1, testing=True)
     a_loader = iter(a_loader)
     b_loader = iter(b_loader)
 
@@ -202,7 +213,11 @@ def sample_images(epoch, batch_i, generator_A2B, generator_B2A):
             axs[i, j].set_title(titles[j])
             axs[i,j].axis('off')
             cnt += 1
-    fig.savefig("images/%s/%d_%d.png" % ('zebra2horse', epoch, batch_i))
+
+    try:
+        fig.savefig("/Volumes/RHINO/home2/tungphan/GAN_EEG/images/%s/%d_%d.png" % (dataset, epoch, batch_i))
+    except:
+        print("cannot save image")
     plt.close()
 
 
