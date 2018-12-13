@@ -7,24 +7,24 @@ import tensorflow as tf
 
 
 
-rhino_root = '/Volumes/RHINO'
 import pandas as pd
 
-def load_data(subject, session, experiement):
+def load_data(subject, experiement, session = None, rhino_root = '/'):
 
-    subject_dir = rhino_root + '/scratch/tphan/joint_classifier/FR1/' + subject + '/dataset.pkl'
+    subject_dir = rhino_root + 'scratch/tphan/joint_classifier/FR1/' + subject + '/dataset.pkl'
     dataset = joblib.load(subject_dir)
-
-
     dataset_enc = select_phase(dataset)
     dataset_enc['X'] = normalize_sessions(dataset_enc['X'], dataset_enc['session'])   # select only encoding data
 
 
-    train_mask = dataset_enc['session'] == session
+    if session is not None:
+        train_mask = dataset_enc['session'] == session
+        train_x, train_y = pd.DataFrame(dataset_enc['X'][~train_mask,:]), pd.DataFrame(dataset_enc['y'][~train_mask])
+        test_x, test_y = pd.DataFrame(dataset_enc['X'][train_mask,:]), pd.DataFrame(dataset_enc['y'][train_mask])
+    else:
+        train_x, train_y = pd.DataFrame(dataset_enc['X']), pd.DataFrame(dataset_enc['y'])
+        test_x, test_y = None, None
 
-
-    train_x, train_y = pd.DataFrame(dataset_enc['X'][~train_mask,:]), pd.DataFrame(dataset_enc['y'][~train_mask])
-    test_x, test_y = pd.DataFrame(dataset_enc['X'][train_mask,:]), pd.DataFrame(dataset_enc['y'][train_mask])
 
     return (train_x,train_y), (test_x,test_y)
 
@@ -39,9 +39,9 @@ def normalize_sessions(pow_mat, event_sessions):
     return pow_mat
 
 
-def get_sessions(subject, experiement):
+def get_sessions(subject, experiement, rhino_root = '/'):
 
-    subject_dir = rhino_root + '/scratch/tphan/joint_classifier/FR1/' + subject + '/dataset.pkl'
+    subject_dir = rhino_root + 'scratch/tphan/joint_classifier/FR1/' + subject + '/dataset.pkl'
     dataset = joblib.load(subject_dir)
     dataset_enc = select_phase(dataset)
     return np.unique(dataset_enc['session'])
